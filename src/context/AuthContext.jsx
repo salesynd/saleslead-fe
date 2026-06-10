@@ -38,10 +38,33 @@ export const AuthProvider = ({ children }) => {
                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                 }).join(''));
                 const decoded = JSON.parse(jsonPayload);
+                const userEmail = decoded.sub || email;
+                
+                let resolvedRole = 'SuperAdmin';
+                const roleId = Number(decoded.roleId);
+                const roleStr = String(decoded.role || '').toLowerCase();
+                
+                if (roleId === 1 || roleStr === 'admin') resolvedRole = 'Admin';
+                else if (roleId === 2 || roleStr === 'user') resolvedRole = 'User';
+                
+                let companyId = decoded.companyId;
+                let companyName = null;
+                
+                try {
+                    if (companyId) {
+                        const allComps = await api.getCompanies();
+                        const dbComp = allComps.find(c => c.id === companyId);
+                        if (dbComp) companyName = dbComp.companyname;
+                    }
+                } catch (err) {
+                    console.warn("Could not fetch DB company name", err);
+                }
                 
                 const userInfo = {
-                    email: decoded.sub,
-                    role: decoded.role || 'SuperAdmin',
+                    email: userEmail,
+                    role: resolvedRole,
+                    companyId: companyId,
+                    companyName: companyName
                 };
                 
                 localStorage.setItem('user', JSON.stringify(userInfo));

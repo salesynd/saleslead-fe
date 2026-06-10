@@ -1,6 +1,16 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8080/auth';
 
+const extractArray = (data) => {
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object') {
+        for (const key in data) {
+            if (Array.isArray(data[key])) return data[key];
+        }
+    }
+    return [];
+};
+
 async function fetchWithAuth(url, options = {}) {
     const token = localStorage.getItem('token');
     
@@ -23,11 +33,35 @@ async function fetchWithAuth(url, options = {}) {
     }
 
     const data = await response.json();
-    if (!response.ok || !data.success) {
+    if (!response.ok || data.success === false) {
         throw new Error(data.message || 'Something went wrong');
     }
 
     return data;
+}
+
+const apiCache = {};
+
+export const clearCache = () => {
+    for (let key in apiCache) delete apiCache[key];
+};
+
+async function fetchWithAuthCached(url, options = {}) {
+    if (!options.method || options.method === 'GET') {
+        const fullUrl = `${url}`;
+        if (apiCache[fullUrl]) {
+            // Fetch in background to update cache for next time
+            fetchWithAuth(url, options).then(data => { apiCache[fullUrl] = data; }).catch(()=>{});
+            return apiCache[fullUrl];
+        }
+        const data = await fetchWithAuth(url, options);
+        apiCache[fullUrl] = data;
+        return data;
+    } else {
+        // Mutative request, clear cache
+        clearCache();
+        return fetchWithAuth(url, options);
+    }
 }
 
 export const api = {
@@ -66,20 +100,27 @@ export const api = {
     },
     
     // Users
-    getUsers: (params = '') => fetchWithAuth(`/users${params}`),
-    createUser: (user) => fetchWithAuth('/user', { method: 'POST', body: JSON.stringify(user) }),
+    getUsers: async (params = '') => extractArray(await fetchWithAuthCached(`/users${params}`)),
+    createUser: (user) => fetchWithAuthCached('/user', { method: 'POST', body: JSON.stringify(user) }),
+    updateUser: (id, user) => fetchWithAuthCached(`/users/${id}`, { method: 'PUT', body: JSON.stringify(user) }),
     
     // Leads
-    getLeads: (params = '') => fetchWithAuth(`/leads${params}`),
-    createLead: (lead) => fetchWithAuth('/leads', { method: 'POST', body: JSON.stringify(lead) }),
+    getLeads: async (params = '') => extractArray(await fetchWithAuthCached(`/leads${params}`)),
+    createLead: (lead) => fetchWithAuthCached('/leads', { method: 'POST', body: JSON.stringify(lead) }),
     
     // Companies
-    getCompanies: (params = '') => fetchWithAuth(`/companies${params}`),
-    createCompany: (company) => fetchWithAuth('/companies', { method: 'POST', body: JSON.stringify(company) }),
+    getCompanies: async (params = '') => extractArray(await fetchWithAuthCached(`/companies${params}`)),
+    createCompany: (company) => fetchWithAuthCached('/companies', { method: 'POST', body: JSON.stringify(company) }),
+    
+    // Roles
+    getRoles: async () => extractArray(await fetchWithAuthCached('/roles')),
     
     // Comments
-    getComments: (params = '') => fetchWithAuth(`/comments${params}`),
+    getComments: async (params = '') => extractArray(await fetchWithAuthCached(`/comments${params}`)),
     
     // POs
-    getPos: (params = '') => fetchWithAuth(`/pos${params}`),
+    getPos: async (params = '') => extractArray(await fetchWithAuthCached(`/pos${params}`)),
+    
+    // Notifications
+    sendNotification: (payload) => fetchWithAuthCached('/notifications', { method: 'POST', body: JSON.stringify(payload) })
 };

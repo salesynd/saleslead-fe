@@ -13,6 +13,8 @@ const LeadsPage = () => {
     const filter = searchParams.get('filter'); // e.g., 'my'
     
     const [leads, setLeads] = useState([]);
+    const [companies, setCompanies] = useState([]);
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     
     // Metrics
@@ -27,14 +29,35 @@ const LeadsPage = () => {
         fetchLeads();
     }, [filter]);
 
-    const fetchLeads = async () => {
+    const fetchLeads = async (searchQuery = '') => {
         try {
             setLoading(true);
-            const data = await api.getLeads();
-            let allLeads = data.data || [];
+            
+            if (user?.role === 'SuperAdmin') {
+                try {
+                    const compsRes = await api.getCompanies();
+                    setCompanies(compsRes);
+                } catch(e) {}
+            }
+            if (user?.role === 'SuperAdmin' || user?.role === 'Admin') {
+                try {
+                    const usersRes = await api.getUsers();
+                    setUsers(usersRes);
+                } catch(e) {}
+            }
+
+            const data = await api.getLeads(searchQuery);
+            let allLeads = data;
             
             if (filter === 'my') {
+                allLeads = allLeads.filter(l => l.createdByEmailId === user?.email);
+            } else if (filter === 'assigned') {
                 allLeads = allLeads.filter(l => l.assignedToEmailId === user?.email);
+            } else if (filter === 'scheduled') {
+                allLeads = allLeads.filter(l => 
+                    (l.createdByEmailId === user?.email || l.assignedToEmailId === user?.email) && 
+                    l.status === 'Scheduled'
+                );
             }
             
             setLeads(allLeads);
@@ -61,15 +84,20 @@ const LeadsPage = () => {
                 <div className="dashboard-content">
                     <div className="dashboard-header">
                         <div>
-                            <h1 className="dashboard-title">{filter === 'my' ? 'My Leads' : 'All Leads'}</h1>
+                            <h1 className="dashboard-title">
+                                {filter === 'my' ? 'My Leads' : filter === 'assigned' ? 'Assigned Leads' : filter === 'scheduled' ? 'Scheduled Leads' : 'All Leads'}
+                            </h1>
                             <p className="dashboard-subtitle">Manage and track all sales leads.</p>
                         </div>
                     </div>
                     
                     <InsightCards type="leads" metrics={metrics} />
                     
-                    <div className="dashboard-section">
-                        {loading ? <div className="loading-state">Loading data...</div> : <LeadsTable leads={leads} />}
+                    <div className="dashboard-section table-wrapper" style={{marginTop: '2rem'}}>
+                        <LeadsTable 
+                            leads={leads} 
+                            loading={loading}
+                        />
                     </div>
                 </div>
             </main>

@@ -1,21 +1,27 @@
 import React, { useState } from 'react';
 import { api } from '../api';
+import { useToast } from '../context/ToastContext';
 import './Forms.css';
 
-export const AddLeadForm = ({ onSuccess, onCancel, users }) => {
+export const AddLeadForm = ({ onSuccess, onCancel, users, currentUserEmail }) => {
     const [formData, setFormData] = useState({
         leadName: '', phone: '', email: '', secondaryPhone: '', 
         location: '', status: 'New', assignedToEmailId: '', note: ''
     });
 
+    const { showToast, hideToast } = useToast();
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const loadingId = showToast('Creating lead...', 'loading', 0);
         try {
-            await api.createLead(formData);
+            await api.createLead({ ...formData, createdByEmailId: currentUserEmail });
+            hideToast(loadingId);
             onSuccess();
         } catch (error) {
+            hideToast(loadingId);
             console.error("Failed to create lead", error);
-            alert("Failed to create lead");
+            showToast("Failed to create lead", 'error');
         }
     };
 
@@ -76,20 +82,34 @@ export const AddLeadForm = ({ onSuccess, onCancel, users }) => {
     );
 };
 
-export const AddUserForm = ({ onSuccess, onCancel, companies }) => {
+export const AddUserForm = ({ onSuccess, onCancel, companies, roles, currentUserRole, currentUserCompanyId }) => {
     const [formData, setFormData] = useState({
         name: '', phone: '', email: '', password: '', 
-        address: '', gender: 'Male', roleId: 2, companyId: ''
+        address: '', gender: 'Male', roleId: '', companyId: currentUserRole === 'Admin' ? currentUserCompanyId : ''
     });
+
+    React.useEffect(() => {
+        if (roles && roles.length > 0 && !formData.roleId) {
+            const userRole = roles.find(r => r.roleName === 'User');
+            if (userRole) {
+                setFormData(prev => ({ ...prev, roleId: userRole.roleId }));
+            }
+        }
+    }, [roles]);
+
+    const { showToast, hideToast } = useToast();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const loadingId = showToast('Creating user...', 'loading', 0);
         try {
             await api.createUser(formData);
+            hideToast(loadingId);
             onSuccess();
         } catch (error) {
+            hideToast(loadingId);
             console.error("Failed to create user", error);
-            alert("Failed to create user");
+            showToast("Failed to create user", 'error');
         }
     };
 
@@ -125,14 +145,17 @@ export const AddUserForm = ({ onSuccess, onCancel, companies }) => {
                         <option>Other</option>
                     </select>
                 </div>
-                <div className="form-group">
-                    <label className="label">Role</label>
-                    <select className="input-field" value={formData.roleId} onChange={e => setFormData({...formData, roleId: e.target.value})}>
-                        <option value={2}>User</option>
-                        <option value={1}>Admin</option>
-                    </select>
-                </div>
-                {companies && (
+                {currentUserRole !== 'Admin' && roles && roles.length > 0 && (
+                    <div className="form-group">
+                        <label className="label">Role</label>
+                        <select className="input-field" value={formData.roleId} onChange={e => setFormData({...formData, roleId: e.target.value})}>
+                            {roles.filter(r => r.roleName !== 'SuperAdmin').map(r => (
+                                <option key={r.roleId} value={r.roleId}>{r.roleName}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+                {companies && currentUserRole !== 'Admin' && (
                     <div className="form-group full-width">
                         <label className="label">Company</label>
                         <select className="input-field" value={formData.companyId} onChange={e => setFormData({...formData, companyId: e.target.value})}>
@@ -155,14 +178,19 @@ export const AddCompanyForm = ({ onSuccess, onCancel }) => {
         companyname: '', companyemail: '', companyphone: '', companydetails: ''
     });
 
+    const { showToast, hideToast } = useToast();
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const loadingId = showToast('Creating company...', 'loading', 0);
         try {
             await api.createCompany(formData);
+            hideToast(loadingId);
             onSuccess();
         } catch (error) {
+            hideToast(loadingId);
             console.error("Failed to create company", error);
-            alert("Failed to create company");
+            showToast("Failed to create company", 'error');
         }
     };
 
