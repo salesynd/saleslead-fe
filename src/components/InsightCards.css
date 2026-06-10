@@ -1,0 +1,69 @@
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+.insight-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.insight-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.insight-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.insight-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.insight-icon-wrapper {
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+}
+
+.insight-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.bg-blue-light { background-color: rgba(59, 130, 246, 0.1); }
+.icon-blue { color: #3b82f6; }
+
+.bg-purple-light { background-color: rgba(139, 92, 246, 0.1); }
+.icon-purple { color: #8b5cf6; }
+
+.bg-green-light { background-color: rgba(16, 185, 129, 0.1); }
+.icon-green { color: #10b981; }
+
+.bg-orange-light { background-color: rgba(245, 158, 11, 0.1); }
+.icon-orange { color: #f59e0b; }
+
+@media (max-width: 1024px) {
+    .insights-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
+}
