@@ -55,7 +55,7 @@ const LeadsTable = ({ leads, loading }) => {
                                 <td colSpan="5" className="empty-state">Loading leads...</td>
                             </tr>
                         ) : paginatedLeads.length > 0 ? paginatedLeads.map((lead, idx) => (
-                            <tr key={lead.id || idx}>
+                            <tr key={lead.id || idx} onClick={() => window.location.href=`/lead/${lead.id}`} style={{cursor: 'pointer'}}>
                                 <td>
                                     <div className="lead-name">{lead.leadName}</div>
                                     <div className="lead-id">ID: {lead.id}</div>

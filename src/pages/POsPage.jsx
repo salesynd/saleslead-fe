@@ -2,19 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../api';
 import Navbar from '../components/Navbar';
 import InsightCards from '../components/InsightCards';
+import { AddPOForm } from '../components/Forms';
 import '../pages/Dashboard.css';
 
 const POsPage = () => {
     const [pos, setPos] = useState([]);
+    const [leads, setLeads] = useState([]);
     const [loading, setLoading] = useState(true);
     const [metrics, setMetrics] = useState({ total: 0 });
     const [searchTerm, setSearchTerm] = useState('');
     const [appliedSearch, setAppliedSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [showForm, setShowForm] = useState(false);
     const itemsPerPage = 10;
 
     useEffect(() => {
         fetchPOs();
+        fetchLeads();
     }, []);
 
     const fetchPOs = async (query = '') => {
@@ -35,6 +39,15 @@ const POsPage = () => {
         }
     };
 
+    const fetchLeads = async () => {
+        try {
+            const data = await api.getLeads();
+            setLeads(data);
+        } catch (error) {
+            console.error("Failed to fetch leads", error);
+        }
+    };
+
     const handleSearch = () => {
         setAppliedSearch(searchTerm);
         setCurrentPage(1);
@@ -44,6 +57,11 @@ const POsPage = () => {
         if (e.key === 'Enter') {
             handleSearch();
         }
+    };
+
+    const handleAddSuccess = () => {
+        setShowForm(false);
+        fetchPOs();
     };
 
     const searchedPOs = pos.filter(po => 
@@ -66,8 +84,19 @@ const POsPage = () => {
                             <h1 className="dashboard-title">Purchase Orders</h1>
                             <p className="dashboard-subtitle">Track all generated POs.</p>
                         </div>
+                        <button className="btn-primary" onClick={() => setShowForm(true)}>+ Add PO</button>
                     </div>
                     
+                    {showForm && (
+                        <div className="dashboard-section form-section" style={{marginBottom: '2rem'}}>
+                            <AddPOForm 
+                                leads={leads}
+                                onSuccess={handleAddSuccess}
+                                onCancel={() => setShowForm(false)}
+                            />
+                        </div>
+                    )}
+
                     <InsightCards type="pos" metrics={metrics} />
 
                     <div className="dashboard-section table-wrapper" style={{marginTop: '2rem'}}>

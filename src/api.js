@@ -120,6 +120,7 @@ export const api = {
     
     // POs
     getPos: async (params = '') => extractArray(await fetchWithAuthCached(`/pos${params}`)),
+    createPO: (po) => fetchWithAuthCached('/pos', { method: 'POST', body: JSON.stringify(po) }),
     
     // Notifications
     sendNotification: (payload) => fetchWithAuthCached('/notifications', { method: 'POST', body: JSON.stringify(payload) })

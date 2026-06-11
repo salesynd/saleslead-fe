@@ -38,8 +38,8 @@ const InsightCards = ({ type = "leads", metrics = {} }) => {
         cards = [
             { title: "TOTAL USERS", value: metrics.total || 0, icon: <Users size={20} className="icon-blue" />, bg: "bg-blue-light" },
             { title: "TOTAL ADMINS", value: metrics.admins || 0, icon: <Briefcase size={20} className="icon-purple" />, bg: "bg-purple-light" },
-            { title: "REGULAR USERS", value: (metrics.total || 0) - (metrics.admins || 0), icon: <Users size={20} className="icon-green" />, bg: "bg-green-light" },
-            { title: "NEW THIS MONTH", value: metrics.newThisMonth || 0, icon: <Activity size={20} className="icon-orange" />, bg: "bg-orange-light" },
+            { title: "COMMENTS TODAY", value: metrics.commentsToday || 0, icon: <Activity size={20} className="icon-green" />, bg: "bg-green-light" },
+            { title: "COMMENTS THIS MONTH", value: metrics.commentsThisMonth || 0, icon: <MessageSquare size={20} className="icon-orange" />, bg: "bg-orange-light" },
         ];
     } else if (type === 'companies') {
         cards = [

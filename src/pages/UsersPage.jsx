@@ -10,7 +10,7 @@ const UsersPage = () => {
     const [users, setUsers] = useState([]);
     const [companies, setCompanies] = useState({});
     const [loading, setLoading] = useState(true);
-    const [metrics, setMetrics] = useState({ total: 0, admins: 0 });
+    const [metrics, setMetrics] = useState({ total: 0, admins: 0, commentsToday: 0, commentsThisMonth: 0 });
     const [searchTerm, setSearchTerm] = useState('');
     const [appliedSearch, setAppliedSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -23,9 +23,10 @@ const UsersPage = () => {
     const fetchUsers = async (query = '') => {
         try {
             setLoading(true);
-            const [usersData, compsData] = await Promise.all([
+            const [usersData, compsData, commentsData] = await Promise.all([
                 api.getUsers(query),
-                api.getCompanies()
+                api.getCompanies(),
+                api.getComments()
             ]);
             
             const compsMap = {};
@@ -35,10 +36,18 @@ const UsersPage = () => {
             const filteredUsers = usersData.filter(u => u.email !== user?.email);
             setUsers(filteredUsers);
             
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const thisMonthStr = todayStr.substring(0, 7);
+
+            const commentsToday = commentsData.filter(c => c.createdTime && c.createdTime.startsWith(todayStr)).length;
+            const commentsThisMonth = commentsData.filter(c => c.createdTime && c.createdTime.startsWith(thisMonthStr)).length;
+
             setMetrics({
                 total: filteredUsers.length,
                 admins: filteredUsers.filter(u => u.roleId === 1).length,
-                newThisMonth: filteredUsers.length, // mock temporal data
+                commentsToday,
+                commentsThisMonth
             });
         } catch (error) {
             console.error("Failed to fetch users", error);
